@@ -26,7 +26,23 @@ load_all_config_options() {
 	return 0
 }
 load_all_config_options "heartbeat" "$SECTION_ID"
+[ -z "$enabled" ] && enabled=0
+[ -z "$server_name" ] && enabled=0
+[ -z "$server_port" ] && server_port=1883
+[ -z "$update_interval" ] && update_interval=5
+[ -z "$mqtt_topic" ] && mqtt_topic="heartbeat"
+[ -z "$mqtt_message" ] && mqtt_message="heartbeat"
+[ -z "$use_password" ] && use_password=0
+[ -z "$username" ] && use_password=0
+[ -z "$password" ] && use_password=0
+if [ "$enabled" -eq 0 ]; then
+	exit 0
+fi
 while : ; do
-	eval mosquitto_pub -h $server_name -p $server_port -q 1 -t "heartbeat" -m "heartbeat"
+if [ "$use_password" -eq 0 ]; then
+	eval mosquitto_pub -h $server_name -p $server_port -q 1 -t "$mqtt_topic" -m "$mqtt_message"
+else
+	eval mosquitto_pub -h $server_name -p $server_port -q 1 -t "$mqtt_topic" -m "$mqtt_message" -u "$username" -P "$password"
+fi
 	sleep $update_interval
 done
