@@ -1,0 +1,22 @@
+#!/bin/sh /etc/rc.common
+START=96
+STOP=5
+boot() {
+	return 0
+}
+reload() {
+	killall -1 heartbeat_updater.sh 2>/dev/null
+}
+restart() {
+	stop
+	sleep 1
+	start
+}
+start() {
+	. /usr/lib/heartbeat/heartbeat_functions.sh
+	start_daemon_for_all_heartbeat_sections
+}
+stop {
+	killall heartbeat_updater.sh 2>/dev/null
+	return 0
+}
