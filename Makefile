@@ -27,6 +27,10 @@ define Build/Prepare
 	$(CP) ./files/* $(PKG_BUILD_DIR)/
 endef
 
+define Package/$(PKG_NAME)/conffiles
+/etc/config/heartbeat
+endef
+
 define Package/$(PKG_NAME)/install
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/heartbeat $(1)/usr/sbin/heartbeat
