@@ -32,6 +32,7 @@ load_all_config_options "heartbeat" "$SECTION_ID"
 [ -z "$update_interval" ] && update_interval=5
 [ -z "$mqtt_topic" ] && mqtt_topic="heartbeat"
 [ -z "$mqtt_message" ] && mqtt_message="heartbeat"
+[ -z "$mqtt_id" ] && mqtt_id="`uname -n`"
 [ -z "$use_password" ] && use_password=0
 [ -z "$username" ] && use_password=0
 [ -z "$password" ] && use_password=0
@@ -40,9 +41,9 @@ if [ "$enabled" -eq 0 ]; then
 fi
 while : ; do
 if [ "$use_password" -eq 0 ]; then
-	eval mosquitto_pub -h $server_name -p $server_port -q 1 -t "$mqtt_topic" -m "$mqtt_message"
+	eval mosquitto_pub -h $server_name -p $server_port -q 1 -t "$mqtt_topic" -m "$mqtt_message" -i "$mqtt_id"
 else
-	eval mosquitto_pub -h $server_name -p $server_port -q 1 -t "$mqtt_topic" -m "$mqtt_message" -u "$username" -P "$password"
+	eval mosquitto_pub -h $server_name -p $server_port -q 1 -t "$mqtt_topic" -m "$mqtt_message" -i "$mqtt_id" -u "$username" -P "$password"
 fi
 	sleep $update_interval
 done
