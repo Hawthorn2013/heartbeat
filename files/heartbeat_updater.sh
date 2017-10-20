@@ -36,14 +36,21 @@ load_all_config_options "heartbeat" "$SECTION_ID"
 [ -z "$use_password" ] && use_password=0
 [ -z "$username" ] && use_password=0
 [ -z "$password" ] && use_password=0
+[ -z "$use_tls" ] && use_tls=0
+[ -z "$cafile" ] && use_tls=0
+[ ! -f "$cafile" ] && use_tls=0
+[ -z "$insecure" ] && insecure=0
 if [ "$enabled" -eq 0 ]; then
 	exit 0
 fi
-while : ; do
-if [ "$use_password" -eq 0 ]; then
-	eval mosquitto_pub -h $server_name -p $server_port -q 1 -t "$mqtt_topic" -m "$mqtt_message" -i "$mqtt_id"
-else
-	eval mosquitto_pub -h $server_name -p $server_port -q 1 -t "$mqtt_topic" -m "$mqtt_message" -i "$mqtt_id" -u "$username" -P "$password"
+[ "$use_password" -eq 1 ] && subcmd_password="-u $username -P $password"
+if [ "$use_tls" -eq 1 ]; then
+	subcmd_tls="--cafile $cafile"
+	if [ "$insecure" -eq 1 ]; then
+		subcmd_tls="$subcmd_tls --insecure"
+	fi
 fi
+while : ; do
+	eval mosquitto_pub -h $server_name -p $server_port -q 1 -t "$mqtt_topic" -m "$mqtt_message" -i "$mqtt_id" "$subcmd_password" "$subcmd_tls"
 	sleep $update_interval
 done
