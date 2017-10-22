@@ -37,15 +37,20 @@ load_all_config_options "heartbeat" "$SECTION_ID"
 [ -z "$username" ] && use_password=0
 [ -z "$password" ] && use_password=0
 [ -z "$use_tls" ] && use_tls=0
-[ -z "$cafile" ] && use_tls=0
-[ ! -f "$cafile" ] && use_tls=0
+[ -n "$cafile" ] && [ -f "$cafile" ] && cafile_availible=1
+[ -n "$capath" ] && [ -d "$capath" ] && capath_availible=1
+[ -z "$cafile_availible" ] && [ -z "$capath_availible" ] && use_tls=0
 [ -z "$insecure" ] && insecure=0
 if [ "$enabled" -eq 0 ]; then
 	exit 0
 fi
 [ "$use_password" -eq 1 ] && subcmd_password="-u $username -P $password"
 if [ "$use_tls" -eq 1 ]; then
-	subcmd_tls="--cafile $cafile"
+	if [ -n "$cafile_availible" ]; then
+		subcmd_tls="--cafile $cafile"
+	elif [ -n "$capath_availible" ]; then
+		subcmd_tls="--capath $capath"
+	fi
 	if [ "$insecure" -eq 1 ]; then
 		subcmd_tls="$subcmd_tls --insecure"
 	fi
