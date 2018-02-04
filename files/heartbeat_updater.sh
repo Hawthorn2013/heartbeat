@@ -46,6 +46,14 @@ client_id="`uname -n`"
 [ -z "$http_enabled" ] && http_enabled=0
 [ -z "$http_url" ] && http_enabled=0
 [ -z "$http_id" ] && http_id="$client_id"
+[ -z "$http_ssl_enabled" ] && http_ssl_enabled=0
+[ -n "$http_ssl_cafile" ] && [ -f "$http_ssl_cafile" ] && http_ssl_cafile_availible=1
+[ -n "$http_ssl_capath" ] && [ -d "$http_ssl_capath" ] && http_ssl_capath_availible=1
+[ -z "$http_ssl_cafile_availible" ] && [ -z "$http_ssl_capath_availible" ] && http_ssl_enabled=0
+[ -z "$http_ssl_verify_client_enabled" ] && http_ssl_verify_client_enabled=0
+[ -n "$http_ssl_verify_client_cert" ] && [ -f "$http_ssl_verify_client_cert" ] && http_ssl_verify_client_cert_availible=1
+[ -n "$http_ssl_verify_client_key" ] && [ -d "$http_ssl_verify_client_key" ] && http_ssl_verify_client_key_availible=1
+[ -z "$http_ssl_verify_client_cert_availible" ] && [ -z "$http_ssl_verify_client_key_availible" ] && http_ssl_verify_client_enabled=0
 if [ "$enabled" -eq 0 ]; then
 	exit 0
 fi
@@ -60,10 +68,24 @@ if [ "$use_tls" -eq 1 ]; then
 		subcmd_tls="$subcmd_tls --insecure"
 	fi
 fi
+if [ "$http_enabled" -eq 1 ]; then
+	if [ "$http_ssl_enabled" -eq 1 ]; then
+		if [ -n "$http_ssl_cafile_availible" ]; then
+			subcmd_http_ssl="--certificate='${http_ssl_cafile}'"
+		elif [ -n "$http_ssl_capath_availible" ]; then
+			subcmd_http_ssl="--ca-directory='${http_ssl_capath}'"
+		fi
+		if [ "$http_ssl_verify_client_enabled" -eq 1 ]; then
+			if [ -n "$http_ssl_verify_client_cert_availible" ]; then
+				subcmd_http_ssl_verify_client="--certificate='${http_ssl_verify_client_cert}' --private-key='${http_ssl_verify_client_key}'"
+			fi
+		fi
+	fi
+fi
 while : ; do
 	eval mosquitto_pub -h $server_name -p $server_port -q 1 -t "$mqtt_topic" -m "$mqtt_message" -i "$mqtt_id" "$subcmd_password" "$subcmd_tls"
 	if [ "$http_enabled" -eq 1 ]; then
-		eval wget "'${http_url}?clientid=${client_id}&token=${http_token}'" -O -
+		eval wget "'${http_url}?clientid=${client_id}&token=${http_token}'" -O - "${subcmd_http_ssl}" "${subcmd_http_ssl_verify_client}"
 	fi
 	sleep $update_interval
 done
