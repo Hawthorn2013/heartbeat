@@ -27,15 +27,15 @@ load_all_config_options() {
 }
 load_all_config_options "heartbeat" "$SECTION_ID"
 [ "$logfile" ] && exec 1>/tmp/${logfile} 2>&1
-client_id="`uname -n`"
+[ -z "$client_id" ] && client_id="`uname -n`"
 [ -z "$enabled" ] && enabled=0
 [ -z "$update_interval" ] && update_interval=5
 [ -z "$mqtt_enabled" ] && mqtt_enabled=0
 [ -z "$mqtt_hostname" ] && mqtt_enabled=0
 [ -z "$mqtt_port" ] && mqtt_port=1883
+[ -z "$mqtt_id" ] && mqtt_id="$client_id"
 [ -z "$mqtt_topic" ] && mqtt_topic="heartbeat"
 [ -z "$mqtt_message" ] && mqtt_message="heartbeat"
-[ -z "$mqtt_id" ] && mqtt_id="$client_id"
 [ -z "$mqtt_use_password" ] && mqtt_use_password=0
 [ -z "$mqtt_username" ] && mqtt_use_password=0
 [ -z "$mqtt_password" ] && mqtt_use_password=0
@@ -98,8 +98,8 @@ while : ; do
 		eval mosquitto_pub -d -h "'${mqtt_hostname}'" -p "'${mqtt_port}'" -q 1 -t "'${mqtt_topic}'" -m "'${mqtt_message}'" -i "'${mqtt_id}'" "${mqtt_subcmd_password}" "${mqtt_subcmd_tls}"
 	fi
 	if [ "$http_enabled" -eq 1 ]; then
-		echo wget "'${http_url}?clientid=${client_id}&token=${http_token}'" -O - "${http_subcmd_http_ssl}" "${http_subcmd_http_ssl_verify_client}"
-		eval wget "'${http_url}?clientid=${client_id}&token=${http_token}'" -O - "${http_subcmd_http_ssl}" "${http_subcmd_http_ssl_verify_client}"
+		echo wget "'${http_url}?clientid=${http_id}&token=${http_token}'" -O - "${http_subcmd_http_ssl}" "${http_subcmd_http_ssl_verify_client}"
+		eval wget "'${http_url}?clientid=${http_id}&token=${http_token}'" -O - "${http_subcmd_http_ssl}" "${http_subcmd_http_ssl_verify_client}"
 	fi
 	sleep $update_interval
 done
