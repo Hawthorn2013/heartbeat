@@ -44,7 +44,7 @@ client_id="`uname -n`"
 [ -z "$cafile_availible" ] && [ -z "$capath_availible" ] && use_tls=0
 [ -z "$insecure" ] && insecure=0
 [ -z "$http_enabled" ] && http_enabled=0
-[ -z "$http_url" ] && http_enabled=0
+[ -z "$http_hostname" ] && http_enabled=0
 [ -z "$http_id" ] && http_id="$client_id"
 [ -z "$http_ssl_enabled" ] && http_ssl_enabled=0
 [ -n "$http_ssl_cafile" ] && [ -f "$http_ssl_cafile" ] && http_ssl_cafile_availible=1
@@ -70,6 +70,7 @@ if [ "$use_tls" -eq 1 ]; then
 fi
 if [ "$http_enabled" -eq 1 ]; then
 	if [ "$http_ssl_enabled" -eq 1 ]; then
+		http_protocol="https"
 		if [ -n "$http_ssl_cafile_availible" ]; then
 			subcmd_http_ssl="--certificate='${http_ssl_cafile}'"
 		elif [ -n "$http_ssl_capath_availible" ]; then
@@ -80,7 +81,12 @@ if [ "$http_enabled" -eq 1 ]; then
 				subcmd_http_ssl_verify_client="--certificate='${http_ssl_verify_client_cert}' --private-key='${http_ssl_verify_client_key}'"
 			fi
 		fi
+	else
+		http_protocol="http"
 	fi
+	[ -n "$http_path" ] || [ "${http_path:0:1}" -eq "/" ] && http_path="/${http_path}"
+	[ -n "$http_port" ] && http_port=":${http_port}"
+	http_url="${http_protocol}://${http_hostname}${http_port}${http_path}"
 fi
 while : ; do
 	eval mosquitto_pub -h $server_name -p $server_port -q 1 -t "$mqtt_topic" -m "$mqtt_message" -i "$mqtt_id" "$subcmd_password" "$subcmd_tls"
