@@ -26,13 +26,14 @@ load_all_config_options() {
 	return 0
 }
 load_all_config_options "heartbeat" "$SECTION_ID"
+client_id="`uname -n`"
 [ -z "$enabled" ] && enabled=0
 [ -z "$server_name" ] && enabled=0
 [ -z "$server_port" ] && server_port=1883
 [ -z "$update_interval" ] && update_interval=5
 [ -z "$mqtt_topic" ] && mqtt_topic="heartbeat"
 [ -z "$mqtt_message" ] && mqtt_message="heartbeat"
-[ -z "$mqtt_id" ] && mqtt_id="`uname -n`"
+[ -z "$mqtt_id" ] && mqtt_id="$client_id"
 [ -z "$use_password" ] && use_password=0
 [ -z "$username" ] && use_password=0
 [ -z "$password" ] && use_password=0
@@ -41,6 +42,9 @@ load_all_config_options "heartbeat" "$SECTION_ID"
 [ -n "$capath" ] && [ -d "$capath" ] && capath_availible=1
 [ -z "$cafile_availible" ] && [ -z "$capath_availible" ] && use_tls=0
 [ -z "$insecure" ] && insecure=0
+[ -z "$http_enabled" ] && http_enabled=0
+[ -z "$http_url" ] && http_enabled=0
+[ -z "$http_id" ] && http_id="$client_id"
 if [ "$enabled" -eq 0 ]; then
 	exit 0
 fi
@@ -57,5 +61,8 @@ if [ "$use_tls" -eq 1 ]; then
 fi
 while : ; do
 	eval mosquitto_pub -h $server_name -p $server_port -q 1 -t "$mqtt_topic" -m "$mqtt_message" -i "$mqtt_id" "$subcmd_password" "$subcmd_tls"
+	if [ "$http_enabled" -eq 1 ]; then
+		eval wget "'${http_url}?clientid=${client_id}&token=${http_token}'" -O -
+	fi
 	sleep $update_interval
 done
