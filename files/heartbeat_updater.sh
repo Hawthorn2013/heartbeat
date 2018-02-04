@@ -26,6 +26,7 @@ load_all_config_options() {
 	return 0
 }
 load_all_config_options "heartbeat" "$SECTION_ID"
+[ "$logfile" ] && exec 1>/tmp/${logfile} 2>&1
 client_id="`uname -n`"
 [ -z "$enabled" ] && enabled=0
 [ -z "$server_name" ] && enabled=0
