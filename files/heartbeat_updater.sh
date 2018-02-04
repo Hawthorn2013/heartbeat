@@ -63,9 +63,9 @@ if [ "$mqtt_enabled" -eq 1 ]; then
 	[ "$mqtt_use_password" -eq 1 ] && mqtt_subcmd_password="-u $mqtt_username -P $mqtt_password"
 	if [ "$mqtt_use_tls" -eq 1 ]; then
 		if [ -n "$mqtt_cafile_availible" ]; then
-			mqtt_subcmd_tls="--cafile $mqtt_cafile"
+			mqtt_subcmd_tls="--cafile '${mqtt_cafile}'"
 		elif [ -n "$mqtt_capath_availible" ]; then
-			mqtt_subcmd_tls="--capath $mqtt_capath"
+			mqtt_subcmd_tls="--capath '${mqtt_capath}'"
 		fi
 		if [ "$mqtt_insecure" -eq 1 ]; then
 			mqtt_subcmd_tls="$mqtt_subcmd_tls --insecure"
@@ -93,8 +93,12 @@ if [ "$http_enabled" -eq 1 ]; then
 	http_url="${http_protocol}://${http_hostname}${http_port}${http_path}"
 fi
 while : ; do
-	eval mosquitto_pub -h $mqtt_hostname -p $mqtt_port -q 1 -t "$mqtt_topic" -m "$mqtt_message" -i "$mqtt_id" "$mqtt_subcmd_password" "$mqtt_subcmd_tls"
+	if [ "$mqtt_enabled" -eq 1 ]; then
+		echo mosquitto_pub -d -h "'${mqtt_hostname}'" -p "'${mqtt_port}'" -q 1 -t "'${mqtt_topic}'" -m "'${mqtt_message}'" -i "'${mqtt_id}'" "${mqtt_subcmd_password}" "${mqtt_subcmd_tls}"
+		eval mosquitto_pub -d -h "'${mqtt_hostname}'" -p "'${mqtt_port}'" -q 1 -t "'${mqtt_topic}'" -m "'${mqtt_message}'" -i "'${mqtt_id}'" "${mqtt_subcmd_password}" "${mqtt_subcmd_tls}"
+	fi
 	if [ "$http_enabled" -eq 1 ]; then
+		echo wget "'${http_url}?clientid=${client_id}&token=${http_token}'" -O - "${http_subcmd_http_ssl}" "${http_subcmd_http_ssl_verify_client}"
 		eval wget "'${http_url}?clientid=${client_id}&token=${http_token}'" -O - "${http_subcmd_http_ssl}" "${http_subcmd_http_ssl_verify_client}"
 	fi
 	sleep $update_interval
