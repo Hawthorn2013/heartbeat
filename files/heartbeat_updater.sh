@@ -59,6 +59,7 @@ load_all_config_options "heartbeat" "$SECTION_ID"
 if [ "$enabled" -eq 0 ]; then
 	exit 0
 fi
+mosquitto_pub --help |grep 'mosquitto_pub version' || mqtt_enabled=0
 if [ "$mqtt_enabled" -eq 1 ]; then
 	[ "$mqtt_use_password" -eq 1 ] && mqtt_subcmd_password="-u $mqtt_username -P $mqtt_password"
 	if [ "$mqtt_use_tls" -eq 1 ]; then
@@ -72,6 +73,7 @@ if [ "$mqtt_enabled" -eq 1 ]; then
 		fi
 	fi
 fi
+wget -V || http_enabled=0
 if [ "$http_enabled" -eq 1 ]; then
 	if [ "$http_ssl_enabled" -eq 1 ]; then
 		http_protocol="https"

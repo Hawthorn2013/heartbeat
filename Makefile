@@ -1,6 +1,6 @@
 include $(TOPDIR)/rules.mk
 PKG_NAME:=heartbeat
-PKG_VERSION:=1.2.5
+PKG_VERSION:=1.2.6
 PKG_RELEASE:=1
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)
@@ -15,7 +15,6 @@ define Package/$(PKG_NAME)
   SECTION:=utils
   CATEGORY:=Utilities
   TITLE:=Heartbeat send utility
-  DEPENDS:=+mosquitto-client
 endef
 
 define Package/$(PKG_NAME)/description
