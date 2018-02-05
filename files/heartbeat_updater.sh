@@ -84,7 +84,7 @@ prase_http()
                 else
                         http_protocol="http"
                 fi
-                [ -z "$http_path" ] || [ "${http_path:0:1}" -eq "/" ] && http_path="/${http_path}"
+                [ -z "$http_path" ] || [ "${http_path:0:1}" != "/" ] && http_path="/${http_path}"
                 [ -n "$http_port" ] && http_port=":${http_port}"
                 http_url="${http_protocol}://${http_hostname}${http_port}${http_path}"
         fi
