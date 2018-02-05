@@ -60,7 +60,33 @@ prase_mqtt()
 prase_http()
 {
         [ -z "$http_enabled" ] && http_enabled=0 && echo "http message: http_enabled is missing, http disabled." && return
-        [ ! -x /usr/bin/wget ] &&  http_enabled=0 && echo "http message: wget not found, http disabled." && return
+	[ -z "$http_bin_type" ] && http_bin_type="auto" && echo "http message: http_bin_type is missing, use auto."
+	case "$http_bin_type" in
+	"auto" )
+		if [ -x /usr/bin/wget ]; then
+			http_bin_type="wget" && echo "http message: wget detected, http_bin_type use wget."
+			http_bin="wget"
+			http_subcmd_misc="-O -"
+		elif [ -x /usr/bin/curl ]; then
+			http_bin_type="curl" && echo "http message: curl detected, http_bin_type use curl."
+			http_bin="curl"
+		else
+			http_enabled=0 && echo "http message: wget and curl not found, http disabled." && return
+		fi
+	;;
+	"wget" )
+		[ ! -x /usr/bin/wget ] && http_enabled=0 && echo "http message: wget not found, http disabled." && return
+		http_bin="wget"
+		http_subcmd_misc="-O -"
+	;;
+	"curl" )
+		[ ! -x /usr/bin/curl ] && http_enabled=0 && echo "http message: curl not found, http disabled." && return
+		http_bin="curl"
+	;;
+	* )
+		http_enabled=0 && echo "http message: http_bin_type invalid, http disabled." && return
+	;;
+	esac
         [ -z "$http_hostname" ] && http_enabled=0 && echo "http message: http_hostname is missing, http disabled." && return
         [ -z "$http_id" ] && http_id="$client_id" && echo "http message: http_id is missing, use client_id."
         [ -z "$http_ssl_enabled" ] && http_ssl_enabled=0 && echo "http message: http_ssl_enabled is missing, http ssl disabled."
@@ -74,21 +100,42 @@ prase_http()
                 if [ "$http_ssl_enabled" -eq 1 ]; then
                         http_protocol="https"
                         if [ -n "$http_ssl_cafile_availible" ]; then
-                                http_subcmd_http_ssl="--certificate='${http_ssl_cafile}'"
+				case "$http_bin_type" in
+				"wget" )
+                                	http_subcmd_http_ssl="--ca-certificate='${http_ssl_cafile}'"
+				;;
+				"curl" )
+					http_subcmd_http_ssl="--cacert '${http_ssl_cafile}'"
+				;;
+				esac
                         elif [ -n "$http_ssl_capath_availible" ]; then
-                                http_subcmd_http_ssl="--ca-directory='${http_ssl_capath}'"
+				case "$http_bin_type" in
+				"wget" )
+                                	http_subcmd_http_ssl="--ca-directory='${http_ssl_capath}'"
+				;;
+				"curl" )
+					http_subcmd_http_ssl="--capath '${http_ssl_capath}'"
+				;;
+				esac
                         fi
                         if [ "$http_ssl_verify_client_enabled" -eq 1 ]; then
-				http_subcmd_http_ssl_verify_client="--certificate='${http_ssl_verify_client_cert}' --private-key='${http_ssl_verify_client_key}'"
+				case "$http_bin_type" in
+				"wget" )
+					http_subcmd_http_ssl_verify_client="--certificate='${http_ssl_verify_client_cert}' --private-key='${http_ssl_verify_client_key}'"
+				;;
+				"curl" )
+					http_subcmd_http_ssl_verify_client="--cert '${http_ssl_verify_client_cert}' --key '${http_ssl_verify_client_key}'"
+				;;
+				esac
                         fi
                 else
                         http_protocol="http"
                 fi
                 [ -z "$http_path" ] || [ "${http_path:0:1}" != "/" ] && http_path="/${http_path}"
                 [ -n "$http_port" ] && http_port=":${http_port}"
-                http_url="${http_protocol}://${http_hostname}${http_port}${http_path}"
+                http_url="${http_protocol}://${http_hostname}${http_port}${http_path}?clientid=${http_id}&token=${http_token}"
         fi
-        http_cmd="wget '${http_url}?clientid=${http_id}&token=${http_token}' -O - ${http_subcmd_http_ssl} ${http_subcmd_http_ssl_verify_client}"
+        http_cmd="${http_bin} '${http_url}' ${http_subcmd_http_ssl} ${http_subcmd_http_ssl_verify_client} ${http_subcmd_misc}"
 }
 load_all_config_options "heartbeat" "$SECTION_ID"
 [ "$logfile" ] && exec 1>/tmp/${logfile} 2>&1
